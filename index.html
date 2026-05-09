@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSI TSSS · TO14 · SNIM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#0b0f14;--bg2:#0f1520;--bg3:#131c2c;
+  --surface:#18243a;--card:#1c2a40;--card2:#203048;
+  --teal:#14b8a6;--teal2:#0d9488;--teal-dim:rgba(20,184,166,.12);--teal-glow:rgba(20,184,166,.06);
+  --amber:#f59e0b;--amber2:#d97706;--amber-dim:rgba(245,158,11,.1);
+  --ok:#10b981;--ok-dim:rgba(16,185,129,.1);
+  --alarm:#ef4444;--alarm-dim:rgba(239,68,68,.1);
+  --tx-hi:#e2ecf8;--tx-mid:#8ca3be;--tx-low:#b7c2ce;--tx-xlow:#93acd1;
+  --b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.03);
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+html{scroll-behavior:smooth;background:#0b0f14;}
+body{background:#0b0f14;color:#e2ecf8;font-family:'Syne',sans-serif;overflow-x:hidden;min-height:100vh;}
+/* grain removed - caused blank screen on mobile/Chrome */
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(ellipse 70% 50% at 15% 30%,rgba(20,184,166,.06) 0%,transparent 55%),
+             radial-gradient(ellipse 50% 60% at 85% 70%,rgba(245,158,11,.03) 0%,transparent 55%);}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:900;height:60px;padding:0 5%;
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(11,15,20,.8);backdrop-filter:blur(24px);border-bottom:1px solid var(--b1);}
+.n-logo{display:flex;align-items:center;gap:12px;}
+.n-mark{width:32px;height:32px;border-radius:7px;background:linear-gradient(135deg,var(--teal),var(--teal2));
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;}
+.n-title{font-size:13px;font-weight:700;letter-spacing:.4px;}
+.n-sub{font-family:'DM Mono',monospace;font-size:8px;color:var(--tx-low);letter-spacing:2px;margin-top:1px;}
+.n-links{display:flex;gap:2px;}
+.nl{padding:7px 13px;border-radius:6px;font-size:11px;font-weight:600;color:var(--tx-mid);
+  background:none;border:none;cursor:pointer;transition:all .2s var(--ease);letter-spacing:.3px;}
+.nl:hover{color:var(--teal);background:var(--teal-dim);}
+.n-right{display:flex;align-items:center;gap:10px;}
+.n-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;
+  border:1px solid rgba(16,185,129,.25);background:rgba(16,185,129,.05);}
+.n-pill-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(16,185,129,.4);}50%{opacity:.6;box-shadow:0 0 0 4px transparent;}}
+.n-pill-t{font-family:'DM Mono',monospace;font-size:9px;color:var(--ok);letter-spacing:1.5px;}
+.n-cta{padding:8px 18px;border-radius:7px;font-size:11px;font-weight:700;letter-spacing:.4px;
+  background:var(--teal);color:#0b0f14;border:none;cursor:pointer;transition:all .2s var(--ease);}
+.n-cta:hover{background:var(--teal2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(20,184,166,.25);}
+
+/* HERO */
+.hero{position:relative;z-index:1;min-height:100vh;padding:80px 5% 60px;
+  display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
+.hero-l{display:flex;flex-direction:column;gap:26px;}
+.h-eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--teal-dim);
+  border:1px solid rgba(20,184,166,.18);border-radius:20px;padding:5px 14px;
+  font-family:'DM Mono',monospace;font-size:9px;color:var(--teal);letter-spacing:2px;width:fit-content;}
+.h-eyebrow::before{content:'';width:4px;height:4px;border-radius:50%;background:var(--teal);}
+.h-title{font-size:clamp(36px,4.5vw,60px);font-weight:800;line-height:1.05;letter-spacing:-1.5px;}
+.h-title em{font-style:normal;background:linear-gradient(135deg,var(--teal),var(--amber));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.h-desc{font-size:14px;line-height:1.8;color:var(--tx-mid);max-width:460px;}
+.h-desc strong{color:var(--tx-hi);font-weight:600;}
+.h-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+  background:var(--b1);border:1px solid var(--b1);border-radius:12px;overflow:hidden;}
+.h-stat{background:var(--bg2);padding:14px 10px;text-align:center;transition:background .2s;}
+.h-stat:hover{background:var(--bg3);}
+.h-sn{font-size:26px;font-weight:800;letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--teal),var(--teal2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.h-sl{font-family:'DM Mono',monospace;font-size:7px;color:var(--tx-low);letter-spacing:1.5px;margin-top:3px;}
+.h-btns{display:flex;gap:10px;}
+.h-btn-p{padding:13px 26px;border-radius:9px;font-size:12px;font-weight:700;letter-spacing:.3px;
+  background:var(--teal);color:#0b0f14;border:none;cursor:pointer;transition:all .25s var(--ease);
+  box-shadow:0 4px 20px rgba(20,184,166,.2);}
+.h-btn-p:hover{background:var(--teal2);transform:translateY(-2px);box-shadow:0 8px 28px rgba(20,184,166,.32);}
+.h-btn-s{padding:13px 26px;border-radius:9px;font-size:12px;font-weight:600;letter-spacing:.3px;
+  background:transparent;color:var(--tx-mid);border:1px solid var(--b1);cursor:pointer;transition:all .25s var(--ease);}
+.h-btn-s:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-dim);}
+
+/* Hero right — mini preview */
+.hero-r{position:relative;display:flex;align-items:center;justify-content:center;}
+.h-deco{position:absolute;width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(20,184,166,.07) 0%,transparent 70%);top:-40px;right:-60px;pointer-events:none;}
+.h-deco2{position:absolute;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(245,158,11,.05) 0%,transparent 70%);bottom:-20px;left:-40px;pointer-events:none;}
+.h-preview{width:100%;max-width:420px;background:var(--card);border:1px solid var(--b1);border-radius:18px;
+  overflow:hidden;box-shadow:0 32px 64px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05);}
+.h-pre-top{padding:10px 16px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;justify-content:space-between;}
+.h-pre-dots{display:flex;gap:5px;}
+.h-pre-dot{width:8px;height:8px;border-radius:50%;}
+.h-pre-dot:nth-child(1){background:#ef4444;}
+.h-pre-dot:nth-child(2){background:var(--amber);}
+.h-pre-dot:nth-child(3){background:var(--ok);}
+.h-pre-lbl{font-family:'DM Mono',monospace;font-size:8px;color:var(--tx-xlow);letter-spacing:1.5px;}
+.h-pre-body{padding:16px;}
+.h-pre-g{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px;}
+.h-pre-cell{aspect-ratio:1;border-radius:8px;border:1px solid var(--b1);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  background:var(--bg3);transition:all .3s;cursor:pointer;}
+.h-pre-cell:hover{border-color:rgba(20,184,166,.3);}
+.h-pre-cell.va{border-color:rgba(239,68,68,.4);background:var(--alarm-dim);animation:va .8s infinite alternate;}
+@keyframes va{to{box-shadow:0 0 18px rgba(239,68,68,.2);}}
+.h-pre-led{width:11px;height:11px;border-radius:50%;transition:all .3s;}
+.h-pre-cell:not(.va) .h-pre-led{background:var(--ok);box-shadow:0 0 8px rgba(16,185,129,.5);}
+.h-pre-cell.va       .h-pre-led{background:var(--alarm);box-shadow:0 0 10px rgba(239,68,68,.6);animation:blink .5s infinite;}
+.h-pre-id{font-family:'DM Mono',monospace;font-size:7px;}
+.h-pre-cell:not(.va) .h-pre-id{color:rgba(16,185,129,.45);}
+.h-pre-cell.va       .h-pre-id{color:rgba(239,68,68,.7);}
+.h-pre-bar{background:var(--bg2);border:1px solid var(--b1);border-radius:7px;
+  padding:9px 12px;display:flex;align-items:center;justify-content:space-between;}
+.h-pre-bar-l{font-family:'DM Mono',monospace;font-size:8px;color:var(--tx-xlow);}
+.h-pre-tags{display:flex;gap:5px;}
+.h-pre-tag{padding:3px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-size:7.5px;border:1px solid;}
+.h-pre-tag.tok{border-color:rgba(16,185,129,.3);color:var(--ok);background:var(--ok-dim);}
+.h-pre-tag.tal{border-color:rgba(239,68,68,.3);color:var(--alarm);background:var(--alarm-dim);animation:blink .9s infinite;display:none;}
+
+.scroll-hint{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--tx-xlow);}
+.scroll-hint span{font-family:'DM Mono',monospace;font-size:7.5px;letter-spacing:3px;text-transform:uppercase;}
+.scroll-hint svg{animation:sb 2s infinite;}
+@keyframes sb{0%,100%{transform:translateY(0);}50%{transform:translateY(5px);}}
+
+/* SECTIONS */
+section{position:relative;z-index:1;padding:90px 5%;}
+.s-ey{font-family:'DM Mono',monospace;font-size:9px;color:var(--teal);letter-spacing:4px;
+  text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.s-ey::before{content:'';width:18px;height:1px;background:var(--teal);}
+.s-h{font-size:clamp(26px,3.5vw,44px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:12px;}
+.s-h span{color:var(--teal);}
+.s-p{font-size:14px;line-height:1.8;color:var(--tx-mid);max-width:560px;margin-bottom:48px;}
+
+/* SIM SECTION */
+#simulation{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);}
+.sim-grid{display:grid;grid-template-columns:268px 1fr 230px;gap:10px;height:670px;}
+
+/* zones panel */
+.zpanel{background:var(--card);border:1px solid var(--b1);border-radius:14px;
+  overflow:hidden;display:flex;flex-direction:column;grid-row:1/3;}
+.ph{padding:12px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:7px;}
+.ph-dot{width:3px;height:14px;background:var(--teal);border-radius:2px;}
+.ph-t{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--tx-low);letter-spacing:2.5px;text-transform:uppercase;}
+.zlist{flex:1;overflow-y:auto;padding:7px;}
+.zlist::-webkit-scrollbar{width:3px;}
+.zlist::-webkit-scrollbar-thumb{background:var(--b1);border-radius:2px;}
+
+.zc{border-radius:9px;border:1px solid var(--b1);margin-bottom:6px;overflow:hidden;
+  background:var(--bg3);transition:border-color .25s,transform .2s,box-shadow .25s;}
+.zc:hover{border-color:rgba(20,184,166,.2);transform:translateX(2px);}
+.zc.veille{border-color:rgba(16,185,129,.14);}
+.zc.alarm{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.025);
+  box-shadow:0 0 20px rgba(239,68,68,.07);animation:zcp .7s infinite alternate;}
+@keyframes zcp{to{box-shadow:0 0 30px rgba(239,68,68,.18);border-color:rgba(239,68,68,.65);}}
+
+.zc-top{display:flex;align-items:center;gap:8px;padding:8px 11px;}
+.zc-n{font-family:'DM Mono',monospace;font-size:10px;font-weight:700;width:20px;color:var(--tx-xlow);}
+.zc.veille .zc-n{color:rgba(16,185,129,.55);}
+.zc.alarm  .zc-n{color:rgba(239,68,68,.75);}
+.zc-i{flex:1;min-width:0;}
+.zc-nm{font-size:11px;font-weight:700;color:var(--tx-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.zc-rk{font-family:'DM Mono',monospace;font-size:7px;color:var(--tx-low);margin-top:1px;}
+.zc-led{width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--tx-xlow);transition:all .3s;}
+.zc.veille .zc-led{background:var(--ok);box-shadow:0 0 7px rgba(16,185,129,.5);}
+.zc.alarm  .zc-led{background:var(--alarm);box-shadow:0 0 9px rgba(239,68,68,.6);animation:blink .5s infinite;}
+
+.zc-body{padding:5px 11px 9px;border-top:1px solid var(--b2);}
+.zc-meta{font-family:'DM Mono',monospace;font-size:7px;color:var(--tx-xlow);margin-bottom:5px;}
+.drow{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:5px;}
+.dd{width:8px;height:8px;border-radius:2px;background:var(--bg2);transition:all .3s;}
+.dd.on  {background:var(--ok);box-shadow:0 0 4px rgba(16,185,129,.4);}
+.dd.fire{background:var(--alarm);box-shadow:0 0 5px rgba(239,68,68,.5);animation:blink .4s infinite;}
+.zc-tmr{font-family:'DM Mono',monospace;font-size:7.5px;color:var(--amber);height:12px;margin-bottom:4px;}
+.zc-btns{display:flex;gap:5px;}
+.zb{flex:1;padding:5px 4px;border-radius:5px;font-family:'Syne',sans-serif;font-size:9px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.4px;cursor:pointer;border:1px solid;transition:all .2s;}
+.zbf{border-color:rgba(239,68,68,.3);color:var(--alarm);background:transparent;}
+.zbf:hover{background:var(--alarm-dim);border-color:rgba(239,68,68,.5);}
+.zbr{border-color:rgba(16,185,129,.3);color:var(--ok);background:transparent;}
+.zbr:hover{background:var(--ok-dim);border-color:rgba(16,185,129,.5);}
+
+/* center */
+.mcol{display:flex;flex-direction:column;gap:9px;}
+
+.mdev{background:linear-gradient(160deg,var(--card),var(--bg3));border:1px solid var(--b1);border-radius:16px;
+  overflow:hidden;box-shadow:0 20px 40px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.04);}
+.mb{padding:10px 16px;background:rgba(255,255,255,.02);border-bottom:1px solid var(--b1);
+  display:flex;align-items:center;justify-content:space-between;}
+.mb-brand{font-size:12px;font-weight:700;color:var(--tx-mid);}
+.mb-brand em{color:#e31837;font-style:normal;}
+.mb-model{font-family:'DM Mono',monospace;font-size:7px;color:var(--tx-xlow);letter-spacing:1px;}
+.ms{background:linear-gradient(160deg,#0b1220,#081018);padding:14px 16px;}
+.ms-top{display:flex;justify-content:space-between;align-items:flex-start;
+  margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.04);}
+.ms-proj{font-family:'DM Mono',monospace;font-size:8px;color:rgba(20,184,166,.3);margin-bottom:3px;}
+.ms-title{font-size:11px;font-weight:700;color:rgba(170,200,235,.7);letter-spacing:.3px;}
+.ms-sub{font-family:'DM Mono',monospace;font-size:7px;color:rgba(90,130,170,.35);margin-top:2px;}
+
+/* INDICATEURS GLOBAUX
+   — VEILLE : rouge (contact sec ouvert = centrale en attente, signal non reçu)
+   — ALARME : vert (contact sec fermé reçu de la centrale → automate confirmé)
+   Logique INVERSE des voyants de zones */
+.ms-globs{display:flex;gap:6px;}
+.mg{padding:5px 9px;border-radius:6px;font-family:'DM Mono',monospace;font-size:7.5px;
+  letter-spacing:.8px;border:1px solid;transition:all .3s var(--ease);text-align:center;line-height:1.3;}
+.mg.feu,.mg.dg{
+  border-color:rgba(239,68,68,.45);color:var(--alarm);
+  background:rgba(239,68,68,.09);box-shadow:0 0 10px rgba(239,68,68,.1);
+  animation:gp .6s infinite alternate;}
+.mg.feu.active,.mg.dg.active{
+  border-color:rgba(16,185,129,.4);color:var(--ok);
+  background:rgba(16,185,129,.08);box-shadow:0 0 14px rgba(16,185,129,.18);
+  animation:none;}
+@keyframes gp{to{box-shadow:0 0 18px rgba(239,68,68,.28);}}
+
+/* zone voyants : VERT veille, ROUGE alarme */
+.mg-g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;}
+.mc{border-radius:7px;border:1px solid var(--b2);padding:8px 5px;text-align:center;
+  background:rgba(255,255,255,.01);transition:all .3s var(--ease);}
+.mc.veille{border-color:rgba(16,185,129,.18);}
+.mc.alarm{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.06);animation:zcp .6s infinite alternate;}
+.mc-led{width:14px;height:14px;border-radius:50%;margin:0 auto 4px;transition:all .3s;}
+.mc.idle   .mc-led{background:var(--tx-xlow);border:1px solid var(--b1);}
+.mc.veille .mc-led{background:var(--ok);box-shadow:0 0 9px rgba(16,185,129,.5),0 0 18px rgba(16,185,129,.2);}
+.mc.alarm  .mc-led{background:var(--alarm);box-shadow:0 0 9px rgba(239,68,68,.6),0 0 18px rgba(239,68,68,.25);animation:blink .45s infinite;}
+.mc-id{font-family:'DM Mono',monospace;font-size:7.5px;}
+.mc.idle   .mc-id{color:var(--tx-xlow);}
+.mc.veille .mc-id{color:rgba(16,185,129,.4);}
+.mc.alarm  .mc-id{color:rgba(239,68,68,.65);}
+.mc-lbl{font-family:'DM Mono',monospace;font-size:6px;line-height:1.2;margin-top:2px;}
+.mc.idle   .mc-lbl{color:var(--tx-xlow);}
+.mc.veille .mc-lbl{color:rgba(16,185,129,.3);}
+.mc.alarm  .mc-lbl{color:rgba(239,68,68,.55);}
+
+.ms-acts{display:flex;gap:6px;flex-wrap:wrap;}
+.mbt{padding:8px 14px;border-radius:7px;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.4px;text-transform:uppercase;border:1px solid;cursor:pointer;transition:all .2s var(--ease);}
+.mbt-acq{border-color:rgba(245,158,11,.35);color:var(--amber);background:var(--amber-dim);}
+.mbt-acq:hover:not(:disabled){background:rgba(245,158,11,.18);transform:translateY(-1px);}
+.mbt-acq:disabled{opacity:.3;cursor:not-allowed;}
+.mbt-al{border-color:rgba(20,184,166,.3);color:var(--teal);background:var(--teal-dim);}
+.mbt-al:hover{background:rgba(20,184,166,.18);transform:translateY(-1px);}
+.mbt-rs{border-color:rgba(16,185,129,.3);color:var(--ok);background:var(--ok-dim);}
+.mbt-rs:hover{background:rgba(16,185,129,.14);transform:translateY(-1px);}
+.mbt-dg{border-color:rgba(245,158,11,.4);color:var(--amber);background:var(--amber-dim);}
+.mbt-dg:hover{background:rgba(245,158,11,.18);transform:translateY(-1px);}
+.mbt-dg.active{border-color:rgba(239,68,68,.5);color:var(--alarm);background:var(--alarm-dim);animation:zcp .7s infinite alternate;}
+.dg-banner{margin-top:8px;padding:8px 12px;border-radius:7px;border:1px solid rgba(245,158,11,.3);
+  background:rgba(245,158,11,.06);display:flex;align-items:center;gap:8px;}
+.dg-icon{font-size:13px;}
+.dg-txt{font-family:'DM Mono',monospace;font-size:8px;color:var(--amber);letter-spacing:.5px;line-height:1.4;}
+
+.mf{padding:6px 16px;background:rgba(0,0,0,.2);border-top:1px solid rgba(255,255,255,.03);
+  display:flex;justify-content:space-between;}
+.mf-ip,.mf-tm{font-family:'DM Mono',monospace;font-size:7px;color:var(--tx-xlow);}
+
+/* event log */
+.evlog{flex:1;background:var(--card);border:1px solid var(--b1);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;}
+.ev-ph{padding:9px 13px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:6px;}
+.ev-ph-dot{width:3px;height:11px;background:var(--amber);border-radius:2px;}
+.ev-ph-t{font-family:'DM Mono',monospace;font-size:8px;color:var(--tx-low);letter-spacing:2px;}
+.ev-body{flex:1;overflow-y:auto;padding:5px;}
+.ev-body::-webkit-scrollbar{width:2px;}
+.ev-body::-webkit-scrollbar-thumb{background:var(--b1);}
+.eve{display:flex;gap:8px;padding:3px 7px;border-radius:4px;
+  font-family:'DM Mono',monospace;font-size:8px;border-left:2px solid transparent;margin-bottom:1px;
+  animation:si .3s ease;}
+@keyframes si{from{opacity:0;transform:translateX(-5px);}to{opacity:1;transform:translateX(0);}}
+.eve.info {border-color:var(--teal);color:rgba(20,184,166,.5);}
+.eve.alarm{border-color:var(--alarm);color:rgba(239,68,68,.65);background:rgba(239,68,68,.02);}
+.eve.ok   {border-color:var(--ok);color:rgba(16,185,129,.55);}
+.eve.warn {border-color:var(--amber);color:rgba(245,158,11,.6);}
+.eve-t{color:var(--tx-xlow);width:76px;flex-shrink:0;}
+
+/* right col */
+.rcol{grid-row:1/3;display:flex;flex-direction:column;gap:9px;overflow-y:auto;}
+.rcol::-webkit-scrollbar{width:3px;}
+.rcol::-webkit-scrollbar-thumb{background:var(--b1);}
+
+.centrale{background:var(--card);border:1px solid var(--b1);border-radius:13px;overflow:hidden;}
+.ct-top{padding:9px 13px;background:var(--card2);border-bottom:1px solid var(--b1);
+  display:flex;justify-content:space-between;align-items:center;}
+.ct-brand{font-size:12px;font-weight:800;color:#dc2626;letter-spacing:1px;}
+.ct-model{font-family:'DM Mono',monospace;font-size:6.5px;color:var(--tx-xlow);letter-spacing:1px;}
+.ct-disp{background:#040709;margin:7px;border-radius:5px;border:1px solid rgba(255,255,255,.03);
+  padding:7px 9px;font-family:'DM Mono',monospace;font-size:8px;color:#0fa;line-height:1.55;min-height:36px;}
+.ct-leds{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:3px 7px 8px;}
+.cl-i{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.cl-d{width:9px;height:9px;border-radius:50%;background:var(--bg2);border:1px solid var(--b1);transition:all .3s;}
+.cl-d.g{background:var(--ok);box-shadow:0 0 7px rgba(16,185,129,.5);}
+.cl-d.r{background:var(--alarm);box-shadow:0 0 7px rgba(239,68,68,.5);animation:blink .5s infinite;}
+.cl-lb{font-family:'DM Mono',monospace;font-size:6px;color:var(--tx-xlow);text-align:center;line-height:1.2;}
+
+.ladder{background:var(--card);border:1px solid var(--b1);border-radius:13px;overflow:hidden;}
+.ld-ph{padding:9px 13px;border-bottom:1px solid var(--b1);background:var(--card2);display:flex;align-items:center;gap:6px;}
+.ld-ph-dot{width:3px;height:11px;background:var(--teal);border-radius:2px;}
+.ld-ph-t{font-family:'DM Mono',monospace;font-size:8px;color:var(--tx-low);letter-spacing:2px;}
+.ld-body{background:#050810;padding:9px;font-family:'DM Mono',monospace;font-size:7.5px;}
+.lcmt{color:var(--tx-xlow);margin-bottom:3px;margin-top:7px;font-size:7px;}
+.lcmt:first-child{margin-top:0;}
+.lrung{display:flex;align-items:center;margin-bottom:4px;}
+.lrail{width:3px;height:19px;background:linear-gradient(180deg,var(--tx-xlow),rgba(37,54,80,.4));flex-shrink:0;border-radius:1px;}
+.lwire{height:2px;flex:1;background:var(--tx-xlow);display:flex;align-items:center;transition:background .3s,box-shadow .3s;}
+.lwire.on{background:var(--teal);box-shadow:0 0 5px rgba(20,184,166,.4);}
+.lct{width:17px;height:17px;border:1.5px solid var(--tx-xlow);display:flex;align-items:center;justify-content:center;
+  font-size:6px;color:var(--tx-xlow);flex-shrink:0;background:#050810;transition:all .3s;margin:0 2px;border-radius:2px;}
+.lct.on  {border-color:var(--teal);color:var(--teal);background:var(--teal-glow);}
+.lct.fire{border-color:var(--alarm);color:var(--alarm);background:var(--alarm-dim);}
+.lcl{width:17px;height:17px;border:1.5px solid var(--tx-xlow);border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:6px;color:var(--tx-xlow);flex-shrink:0;background:#050810;transition:all .3s;margin:0 2px;}
+.lcl.on{border-color:var(--ok);color:var(--ok);background:var(--ok-dim);box-shadow:0 0 7px rgba(16,185,129,.3);}
+.llbl{font-size:6.5px;color:var(--tx-xlow);margin:0 2px;white-space:nowrap;line-height:1.2;transition:color .3s;}
+.llbl.on  {color:var(--teal);}
+.llbl.fire{color:var(--alarm);}
+
+.vbox{background:var(--card);border:1px solid var(--b1);border-radius:13px;overflow:hidden;}
+.vbox-ph{padding:9px 13px;border-bottom:1px solid var(--b1);background:var(--card2);display:flex;align-items:center;gap:6px;}
+.vbox-ph-dot{width:3px;height:11px;background:var(--amber);border-radius:2px;}
+.vbox-ph-t{font-family:'DM Mono',monospace;font-size:8px;color:var(--tx-low);letter-spacing:2px;}
+.vrow{display:grid;grid-template-columns:62px 1fr 22px;padding:4px 11px;
+  border-bottom:1px solid var(--b2);font-family:'DM Mono',monospace;font-size:7.5px;align-items:center;transition:background .2s;}
+.vrow:last-child{border-bottom:none;}
+.vrow:hover{background:rgba(255,255,255,.015);}
+.va{color:var(--tx-xlow);}
+.vn{color:rgba(140,163,190,.45);}
+.vv{text-align:right;color:var(--tx-xlow);font-weight:700;transition:all .3s;}
+.vv.t{color:var(--ok);text-shadow:0 0 6px rgba(16,185,129,.35);}
+.vv.f{color:var(--alarm);text-shadow:0 0 6px rgba(239,68,68,.35);}
+
+/* TECH */
+#tech{background:linear-gradient(180deg,var(--bg2) 0%,var(--bg) 100%);}
+.tg{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+  background:var(--b1);border:1px solid var(--b1);border-radius:18px;overflow:hidden;}
+.tc{background:var(--bg2);padding:28px 24px;transition:background .25s,transform .25s;position:relative;overflow:hidden;}
+.tc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--teal),var(--amber));opacity:0;transition:opacity .25s;}
+.tc:hover{background:var(--bg3);transform:translateY(-2px);}
+.tc:hover::before{opacity:1;}
+.tc-num{font-family:'DM Mono',monospace;font-size:9px;color:var(--teal);letter-spacing:2px;margin-bottom:10px;}
+.tc-t{font-size:15px;font-weight:800;color:var(--tx-hi);margin-bottom:7px;letter-spacing:-.3px;}
+.tc-d{font-size:12px;line-height:1.7;color:var(--tx-mid);}
+.tc-tag{display:inline-block;margin-top:12px;padding:3px 9px;border-radius:4px;
+  font-family:'DM Mono',monospace;font-size:7px;letter-spacing:1.5px;
+  background:var(--teal-dim);border:1px solid rgba(20,184,166,.18);color:var(--teal);}
+
+.norms{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-top:36px;}
+.norm{background:var(--card);border:1px solid var(--b1);border-radius:9px;
+  padding:12px 8px;text-align:center;transition:all .2s;}
+.norm:hover{border-color:rgba(20,184,166,.25);background:var(--card2);}
+.norm-c{font-family:'DM Mono',monospace;font-size:9px;color:var(--teal);font-weight:700;letter-spacing:.5px;}
+.norm-d{font-size:8.5px;color:var(--tx-low);margin-top:3px;line-height:1.4;}
+
+/* ABOUT */
+#about{background:var(--bg);}
+.ag{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.acard{background:var(--card);border:1px solid var(--b1);border-radius:14px;padding:24px;transition:all .25s;}
+.acard:hover{border-color:rgba(20,184,166,.18);transform:translateY(-2px);}
+.ac-lbl{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--teal);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:14px;}
+.ac-name{font-size:17px;font-weight:800;color:var(--tx-hi);margin-bottom:5px;letter-spacing:-.3px;}
+.ac-role{font-size:12px;color:var(--tx-mid);line-height:1.7;margin-bottom:12px;}
+.ac-tag{display:inline-block;padding:3px 10px;border-radius:4px;font-family:'DM Mono',monospace;font-size:7.5px;letter-spacing:1.5px;
+  background:var(--teal-dim);border:1px solid rgba(20,184,166,.18);color:var(--teal);}
+.acard.full{grid-column:span 2;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+.akv{display:flex;flex-direction:column;gap:9px;}
+.kv{border-bottom:1px solid var(--b2);padding-bottom:9px;}
+.kv-k{font-family:'DM Mono',monospace;font-size:7.5px;color:var(--tx-low);letter-spacing:1.5px;margin-bottom:3px;}
+.kv-v{font-size:12px;font-weight:600;color:var(--tx-hi);}
+
+/* FOOTER */
+footer{position:relative;z-index:1;background:var(--bg2);border-top:1px solid var(--b1);padding:48px 5% 28px;}
+.fg{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:44px;margin-bottom:44px;}
+.fl{font-size:18px;font-weight:800;color:var(--tx-hi);letter-spacing:-.4px;margin-bottom:9px;}
+.fl span{color:var(--teal);}
+.fi{font-family:'Instrument Serif',serif;font-style:italic;font-size:14px;color:var(--tx-low);line-height:1.7;}
+.fc-h{font-family:'DM Mono',monospace;font-size:8.5px;color:var(--teal);letter-spacing:2.5px;margin-bottom:13px;text-transform:uppercase;}
+.fc-items{display:flex;flex-direction:column;gap:7px;}
+.fc-item{font-size:11px;color:var(--tx-mid);display:flex;gap:5px;}
+.fc-item strong{color:var(--tx-hi);font-weight:600;}
+.fb{border-top:1px solid var(--b1);padding-top:22px;display:flex;justify-content:space-between;align-items:center;}
+.fb-c{font-size:10px;color:var(--tx-low);}
+.fb-c em{color:var(--teal);font-style:normal;}
+.fb-t{font-family:'DM Mono',monospace;font-size:7.5px;color:var(--tx-xlow);letter-spacing:2px;}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;z-index:2000;
+  background:rgba(0,0,0,.82);backdrop-filter:blur(16px);align-items:center;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:var(--card);border:1px solid rgba(20,184,166,.2);border-radius:18px;
+  width:560px;max-height:76vh;overflow:hidden;
+  box-shadow:0 40px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);}
+.mh{padding:16px 22px;border-bottom:1px solid var(--b1);display:flex;justify-content:space-between;align-items:center;}
+.mh-t{font-size:14px;font-weight:800;color:var(--tx-hi);letter-spacing:-.2px;}
+.mh-cl{width:27px;height:27px;border-radius:50%;border:1px solid var(--b1);background:none;
+  color:var(--tx-mid);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.mh-cl:hover{border-color:var(--alarm);color:var(--alarm);}
+.mbody{overflow-y:auto;max-height:calc(76vh - 58px);}
+.mbody::-webkit-scrollbar{width:3px;}
+.mbody::-webkit-scrollbar-thumb{background:var(--b1);}
+.at-h{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:9px 18px;
+  background:rgba(255,255,255,.015);border-bottom:1px solid var(--b1);
+  font-family:'DM Mono',monospace;font-size:7.5px;color:var(--tx-low);letter-spacing:1.5px;text-transform:uppercase;}
+.at-r{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:9px 18px;
+  border-bottom:1px solid var(--b2);font-family:'DM Mono',monospace;font-size:8.5px;transition:background .2s;}
+.at-r:hover{background:rgba(255,255,255,.02);}
+.at-r.act{background:rgba(239,68,68,.03);}
+.at-msg{color:var(--tx-hi);}
+.at-d,.at-t{color:var(--tx-mid);}
+.at-ea{color:var(--alarm);}
+.at-eq{color:var(--ok);}
+.at-empty{padding:28px;text-align:center;color:var(--tx-low);font-family:'DM Mono',monospace;font-size:10px;}
+
+/* Siren */
+.siren{display:none;position:fixed;top:68px;left:50%;transform:translateX(-50%);
+  background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.28);border-radius:9px;
+  padding:9px 22px;z-index:800;font-family:'DM Mono',monospace;font-size:9px;color:var(--alarm);
+  letter-spacing:2px;backdrop-filter:blur(16px);animation:gp .5s infinite alternate;
+  box-shadow:0 8px 28px rgba(239,68,68,.12);}
+.siren.on{display:block;}
+
+@media(max-width:1080px){
+  .sim-grid{grid-template-columns:240px 1fr;grid-template-rows:auto auto;}
+  .rcol{grid-column:1/3;}
+  .tg{grid-template-columns:repeat(2,1fr);}
+  .norms{grid-template-columns:repeat(3,1fr);}
+}
+@media(max-width:1080px){
+  .cv-grid{grid-template-columns:1fr;}
+  .cv-sidebar{position:static;}
+}
+@media(max-width:768px){
+  .hero{grid-template-columns:1fr;}
+  .hero-r{display:none;}
+  .sim-grid{grid-template-columns:1fr;}
+  .zpanel{grid-row:auto;}
+  .rcol{grid-column:1;}
+  .tg{grid-template-columns:1fr;}
+  .norms{grid-template-columns:repeat(2,1fr);}
+  .ag,.acard.full{grid-template-columns:1fr;}
+  .acard.full{grid-column:1;}
+  .fg{grid-template-columns:1fr;}
+  .n-links{display:none;}
+  .cv-skills-row{grid-template-columns:1fr;}
+  .cv-exp-grid{grid-template-columns:1fr;}
+  .cv-certs{grid-template-columns:1fr 1fr;}
+}
+
+/* ══════════════════════════════════════════ CV SECTION */
+#cv{background:linear-gradient(180deg,var(--bg) 0%,var(--bg2) 100%);}
+.cv-grid{display:grid;grid-template-columns:300px 1fr;gap:28px;align-items:start;}
+.cv-sidebar{
+  position:sticky;top:80px;
+  display:flex;flex-direction:column;gap:14px;
+}
+
+/* Profile card */
+.cv-profile{
+  background:var(--card);border:1px solid var(--b1);border-radius:16px;
+  overflow:hidden;
+}
+.cv-profile-top{
+  background:linear-gradient(135deg,var(--teal-dim),rgba(20,184,166,.04));
+  padding:28px 22px 20px;text-align:center;
+  border-bottom:1px solid var(--b1);position:relative;
+}
+.cv-avatar{
+  width:72px;height:72px;border-radius:50%;
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;font-weight:800;color:#fff;
+  margin:0 auto 14px;
+  box-shadow:0 0 0 4px rgba(20,184,166,.15),0 0 0 8px rgba(20,184,166,.06);
+
+}
+</style>
+</head>
+<body>
+
+<div class="siren" id="siren">⬤ SIRÈNE ACTIVE — ALARME INCENDIE</div>
+
+<nav>
+  <div class="n-logo">
+    <div class="n-mark">S</div>
+    <div>
+      <div class="n-title">SSI · TO14 · TSSS</div>
+      <div class="n-sub">SNIM ZOUERATE · MAURITANIE</div>
+    </div>
+  </div>
+  <div class="n-links">
+    <button class="nl" onclick="goto('simulation')">Simulation</button>
+    <button class="nl" onclick="goto('tech')">Architecture</button>
+    <button class="nl" onclick="goto('about')">Projet</button>
+  </div>
+  <div class="n-right">
+    <div class="n-pill"><div class="n-pill-dot"></div><span class="n-pill-t" id="nSt">EN VEILLE</span></div>
+    <button class="n-cta" onclick="goto('simulation')">Démo →</button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-l">
+    <div class="h-eyebrow">PFE · ISGM · MAINTENANCE INDUSTRIELLE · DMSA 2025–2026</div>
+    <h1 class="h-title">Installation d'un<br><em>Système de Sécurité<br>Incendie</em></h1>
+    <div class="h-stats">
+      <div class="h-stat"><div class="h-sn">36</div><div class="h-sl">DÉTECTEURS A1R</div></div>
+      <div class="h-stat"><div class="h-sn">8</div><div class="h-sl">ZONES SSI</div></div>
+      <div class="h-stat"><div class="h-sn">29</div><div class="h-sl">VAR. EBOOL</div></div>
+      <div class="h-stat"><div class="h-sn">383K</div><div class="h-sl">BUDGET MRU</div></div>
+    </div>
+    <div class="h-btns">
+      <button class="h-btn-p" onclick="goto('simulation')">Lancer la simulation →</button>
+      <button class="h-btn-s" onclick="goto('tech')">Architecture technique</button>
+    </div>
+  </div>
+  <div class="hero-r">
+    <div class="h-deco"></div><div class="h-deco2"></div>
+    <div class="h-preview">
+      <div class="h-pre-top">
+        <div class="h-pre-dots"><div class="h-pre-dot"></div><div class="h-pre-dot"></div><div class="h-pre-dot"></div></div>
+        <div class="h-pre-lbl">MAGELIS · IP 172.16.17.80</div>
+      </div>
+      <div class="h-pre-body">
+        <div class="h-pre-g" id="heroGrid"></div>
+        <div class="h-pre-bar">
+          <div class="h-pre-bar-l">TO14-234037 · TSSS_28_04_26</div>
+          <div class="h-pre-tags">
+            <div class="h-pre-tag tok" id="hTagOk">VEILLE</div>
+            <div class="h-pre-tag tal" id="hTagAl">ALARME</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <span>Défiler</span>
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+  </div>
+</section>
+
+<section id="simulation">
+  <div class="s-ey">Démo Interactive</div>
+  <h2 class="s-h">Simulation <span>SSI TSSS</span></h2>
+  <p class="s-p">Cliquez sur <strong style="color:var(--alarm)">Déclencher</strong> dans une zone pour visualiser la séquence complète. Voyants de zones : <strong style="color:var(--ok)">verts en veille</strong>, <strong style="color:var(--alarm)">rouges en alarme</strong>. Indicateurs globaux ALARME FEU et DÉRANGEMENT : <strong style="color:var(--alarm)">rouges en veille</strong> (contact sec ouvert), passent au <strong style="color:var(--ok)">vert</strong> quand le contact sec est reçu de la centrale.</p>
+  <div class="sim-grid">
+    <div class="zpanel">
+      <div class="ph"><div class="ph-dot"></div><div class="ph-t">Zones · NF S61-970</div></div>
+      <div class="zlist" id="zList"></div>
+    </div>
+    <div class="mcol">
+      <div class="mdev">
+        <div class="mb">
+          <div class="mb-brand"><em>Schneider</em> Electric</div>
+          <div class="mb-model">MAGELIS HARMONY · HMIGTO6310 · 800×600 · 64K</div>
+        </div>
+        <div class="ms">
+          <div class="ms-top">
+            <div>
+              <div class="ms-proj">PROJET: HMIT014 · TSSS_28_04_26 · %M521→%M549</div>
+              <div class="ms-title">Centrale Détection Incendie TO14-234037</div>
+              <div class="ms-sub">Salle sous-station secondaire · SNIM Zouerate</div>
+            </div>
+            <div class="ms-globs">
+              <div class="mg feu" id="gFeu">ALARME<br>FEU</div>
+              <div class="mg dg"  id="gDg">DÉRANG.<br>SSI</div>
+            </div>
+          </div>
+          <div class="mg-g" id="mgGrid"></div>
+          <div class="ms-acts">
+            <button class="mbt mbt-acq" id="btnAcq" onclick="acquitter()" disabled>Acquittement</button>
+            <button class="mbt mbt-dg"  id="btnDg"  onclick="toggleDerang()">Dérangement</button>
+            <button class="mbt mbt-al"  onclick="openModal()">Alarmes ↗</button>
+            <button class="mbt mbt-rs"  onclick="resetAll()">Réarm. Général</button>
+          </div>
+          <div class="dg-banner" id="dgBanner" style="display:none;">
+            <span class="dg-icon">⚠</span>
+            <span class="dg-txt">DÉRANGEMENT ACTIF — Coupure câble boucle détection · Toutes alarmes bloquées · %M546 = 1</span>
+          </div>
+        </div>
+        <div class="mf">
+          <div class="mf-ip">172.16.17.80 · MODBUS TCP · UNI-TELWAY</div>
+          <div class="mf-tm" id="mfTm">--/--/---- --:--:--</div>
+        </div>
+      </div>
+      <div class="evlog">
+        <div class="ev-ph"><div class="ev-ph-dot"></div><div class="ev-ph-t">Journal · Incendie_zone</div></div>
+        <div class="ev-body" id="evBody"></div>
+      </div>
+    </div>
+    <div class="rcol">
+      <div class="centrale">
+        <div class="ct-top"><div class="ct-brand">DESAUTEL</div><div class="ct-model">DA EVOLUTION UC · V3.0/P30 · NF-SSI</div></div>
+        <div class="ct-disp" id="cDisp">VEILLE — TOUS CIRCUITS OK<br>8 ZONES · 36 DÉT. OPÉRATIONNELS</div>
+        <div class="ct-leds">
+          <div class="cl-i"><div class="cl-d g" id="cT"></div><div class="cl-lb">SOUS<br>TENSION</div></div>
+          <div class="cl-i"><div class="cl-d"   id="cF"></div><div class="cl-lb">AL.<br>FEU</div></div>
+          <div class="cl-i"><div class="cl-d"   id="cD"></div><div class="cl-lb">DÉRANG.<br>GÉN.</div></div>
+          <div class="cl-i"><div class="cl-d g" id="cB"></div><div class="cl-lb">BATT.<br>72H</div></div>
+        </div>
+      </div>
+      <div class="ladder">
+        <div class="ld-ph"><div class="ld-ph-dot"></div><div class="ld-ph-t">Ladder · PL7 Pro</div></div>
+        <div class="ld-body">
+          <div class="lcmt">// RES.1 — Zone 1 → Timer</div>
+          <div class="lrung"><div class="lrail"></div>
+            <div class="lwire" id="lw1"><div class="lct" id="lc1">|/|</div><div class="llbl" id="ll1">In_z1<br>%M521</div></div>
+            <div class="lwire" id="lw2"><div class="lct" id="lc2">┤/├</div><div class="llbl">In_dg<br>%M546</div></div>
+            <div class="lwire" id="lw3"><div class="lcl" id="lco1">(T)</div><div class="llbl">Tmr1<br>F_ton</div></div>
+          <div class="lrail"></div></div>
+          <div class="lcmt">// RES.9 — Alarme Générale</div>
+          <div class="lrung"><div class="lrail"></div>
+            <div class="lwire" id="lw4"><div class="lct" id="lc3">|/|</div><div class="llbl">In_al<br>%M544</div></div>
+            <div class="lwire" id="lw5"><div class="lct" id="lc4">|\|</div><div class="llbl">Out_aq<br>%M549</div></div>
+            <div class="lwire" id="lw6"><div class="lcl" id="lco2">( )</div><div class="llbl">Out_al<br>%M545</div></div>
+          <div class="lrail"></div></div>
+          <div class="lcmt">// RES.10 — Sirène</div>
+          <div class="lrung"><div class="lrail"></div>
+            <div class="lwire" id="lw7"><div class="lct" id="lc5">|/|</div><div class="llbl">Out_z1<br>%M529</div></div>
+            <div class="lwire" id="lw8"><div class="lct" id="lc6">|\|</div><div class="llbl">Out_aq<br>%M549</div></div>
+            <div class="lwire" id="lw9"><div class="lcl" id="lco3">( )</div><div class="llbl">Sir_e1<br>%M538</div></div>
+          <div class="lrail"></div></div>
+        </div>
+      </div>
+      <div class="vbox">
+        <div class="vbox-ph"><div class="vbox-ph-dot"></div><div class="vbox-ph-t">Variables EBOOL</div></div>
+        <div id="varBody"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tech">
+  <div class="s-ey">Architecture Technique</div>
+  <h2 class="s-h">Composants <span>clés</span></h2>
+  <p class="s-p">Un système à quatre niveaux — détection thermique immune aux poussières de fer, traitement automate, alarme/extinction localisée, supervision temps réel.</p>
+  <div class="tg">
+    <div class="tc"><div class="tc-num">01 — DÉTECTION</div><div class="tc-t">Apollo Série 65 A1R</div><div class="tc-d">Détecteur thermique statique (65°C) + vélocimétrique. Immunité totale aux poussières conductrices de minerai de fer. Certifié EN 54-5. IP44. 36 unités réparties sur 8 zones.</div><div class="tc-tag">NF EN 54-5 · 36 UNITÉS</div></div>
+    <div class="tc"><div class="tc-num">02 — TRAITEMENT</div><div class="tc-t">Desautel DA Evolution UC</div><div class="tc-d">Centrale NF-SSI certifiée CE0333. CPU-UC V3.0/P30. 8 zones conventionnelles, afficheur LCD, autonomie batterie 72h, relais contacts libres vers automate Schneider Premium.</div><div class="tc-tag">NF EN 54-2 / 54-4</div></div>
+    <div class="tc"><div class="tc-num">03 — AUTOMATE</div><div class="tc-t">Schneider Premium · PL7 Pro</div><div class="tc-d">Section "Incendie_zone" indépendante dans tâche séparée. 29 variables EBOOL %M521→%M549. 8 temporisateurs F_ton. Intégration sans modifier le programme de production existant.</div><div class="tc-tag">TSSS_28_04_26</div></div>
+    <div class="tc"><div class="tc-num">04 — SUPERVISION</div><div class="tc-t">Magelis HMIGTO6310</div><div class="tc-d">Vijeo Designer 6.2. Écran tactile 800×600 64K couleurs. IP 172.16.17.80. Ethernet Modbus TCP. Deux écrans : voyants zones Z1–Z8 + historique alarmes horodatées. Validé 28/04/2026.</div><div class="tc-tag">ETHERNET · MODBUS TCP</div></div>
+    <div class="tc"><div class="tc-num">05 — EXTINCTION</div><div class="tc-t">Aérosol QRR0.03G</div><div class="tc-d">Module 30g autonome. Déclenchement mécanique à 175°C sans alimentation électrique. Zéro maintenance pendant 10 ans. Protection localisée à l'intérieur des armoires électriques critiques.</div><div class="tc-tag">EN 12094 · 9 MODULES</div></div>
+    <div class="tc"><div class="tc-num">06 — DÉVELOPPEMENT</div><div class="tc-t">Oracle VirtualBox "Zeynou M37"</div><div class="tc-d">Machine virtuelle Windows 10 · 4 911 Mo RAM · 50 Go VDI. Environnement intégré PL7 Pro + Unity Pro XL + Vijeo Designer 6.2. Simulation complète et validée avant déploiement physique.</div><div class="tc-tag">SIMULATION VIRTUELLE</div></div>
+  </div>
+  <div class="norms">
+    <div class="norm"><div class="norm-c">NF S61-970</div><div class="norm-d">Règles installation SSI</div></div>
+    <div class="norm"><div class="norm-c">NF EN 54-5</div><div class="norm-d">Détecteurs thermiques A1R</div></div>
+    <div class="norm"><div class="norm-c">NF EN 54-2</div><div class="norm-d">Équipements contrôle ECS</div></div>
+    <div class="norm"><div class="norm-c">NF EN 54-3</div><div class="norm-d">Dispositifs sonores feu</div></div>
+    <div class="norm"><div class="norm-c">EN 12094</div><div class="norm-d">Systèmes extinction fixe</div></div>
+    <div class="norm"><div class="norm-c">NF C 32-070</div><div class="norm-d">Câbles CR1-C1 feu 1h</div></div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="s-ey">Projet Fin d'Études</div>
+  <h2 class="s-h">PFE <span>2025–2026</span></h2>
+  <p class="s-p">Licence Professionnelle Maintenance Industrielle · Option DMSA · Institut Supérieur du Génie Mécanique · Groupe Polytechnique · République Islamique de Mauritanie.</p>
+  <div class="ag">
+    <div class="acard"><div class="ac-lbl">Réalisatrice</div><div class="ac-name">Zeinebou Mouhamed Ebija</div><div class="ac-role">Étudiante en Licence Professionnelle Maintenance Industrielle, option DMSA à l'ISGM. Stage effectué au sein du Service Électrique 263 de la SNIM, Zouerate.</div><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><div class="ac-tag">STAGE 05/02 &ndash; 19/05/2026</div><a href="https://zeinebouebije-37.github.io/Mon-CV/" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:4px;font-family:DM Mono,monospace;font-size:7.5px;letter-spacing:1.5px;background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.25);color:#14b8a6;text-decoration:none;">CV EN LIGNE &#x2197;</a></div></div>
+    <div class="acard"><div class="ac-lbl">Encadrement</div><div class="ac-name">Dr. Selma Ben Attia</div><div class="ac-role">Encadrante pédagogique · ISGM. Orientations académiques et suivi du mémoire de PFE.</div><div class="ac-name" style="margin-top:12px;font-size:14px;">CS. Ely Cheikh Rhine</div><div class="ac-role">Chef de Service · Encadrant Entreprise · Service Électrique 263 · SNIM.</div></div>
+    <div class="acard full">
+      <div class="akv">
+        <div class="kv"><div class="kv-k">ENTREPRISE</div><div class="kv-v">SNIM — Société Nationale Industrielle et Minière</div></div>
+        <div class="kv"><div class="kv-k">SIÈGE</div><div class="kv-v">Zouerate · République Islamique de Mauritanie</div></div>
+        <div class="kv"><div class="kv-k">PRODUCTION</div><div class="kv-v">24 Mt/an minerai de fer — PSE 2030</div></div>
+      </div>
+      <div class="akv">
+        <div class="kv"><div class="kv-k">MATRICULE</div><div class="kv-v">234037</div></div>
+        <div class="kv"><div class="kv-k">RÉFÉRENCE PROJET</div><div class="kv-v">TSSS_28_04_26</div></div>
+        <div class="kv"><div class="kv-k">VALIDATION IHM</div><div class="kv-v">28 Avril 2026 · Magelis Harmony</div></div>
+      </div>
+      <div class="akv">
+        <div class="kv"><div class="kv-k">BUDGET TOTAL HT</div><div class="kv-v">383 538 MRU</div></div>
+        <div class="kv"><div class="kv-k">ROI</div><div class="kv-v">&lt; ≈ 5% d'un arrêt de 30 jours</div></div>
+        <div class="kv"><div class="kv-k">DÉPLOIEMENT PRÉVU</div><div class="kv-v">3 sous-stations TO14</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="fg">
+    <div>
+      <div class="fl">SSI <span>TO14</span> · TSSS</div>
+      <div class="fi">"La sécurité industrielle n'est pas une contrainte — c'est la condition du progrès."</div>
+    </div>
+    <div>
+      <div class="fc-h">Technique</div>
+      <div class="fc-items">
+        <div class="fc-item"><strong>Centrale :</strong> Desautel DA Evolution UC</div>
+        <div class="fc-item"><strong>Automate :</strong> Schneider Premium 3623· PL7 Pro</div>
+        <div class="fc-item"><strong>IHM :</strong> Magelis HMIGTO6310</div>
+        <div class="fc-item"><strong>Câbles :</strong> CR1-C1 / SYT1 blindé</div>
+      </div>
+    </div>
+    <div>
+      <div class="fc-h">Référence</div>
+      <div class="fc-items">
+        <div class="fc-item"><strong>Matricule :</strong>234037</div>
+        <div class="fc-item"><strong>IP IHM :</strong> 172.16.17.80</div>
+        <div class="fc-item"><strong>Normes :</strong> NF S61-970 · EN 54</div>
+        <div class="fc-item"><strong>Soutenance :</strong> Juin 2026 · ISGM</div>
+      </div>
+    </div>
+  </div>
+  <div class="fb">
+    <div class="fb-c">© 2026 <em>Zeinebou Mouhamed Ebija</em> · ISGM Groupe Polytechnique · Tous droits réservés</div>
+    <div class="fb-t"></div>
+  </div>
+</footer>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="mh"><div class="mh-t">Historique des Alarmes</div><button class="mh-cl" onclick="closeModal()">✕</button></div>
+    <div class="mbody">
+      <div class="at-h"><div>Message</div><div>Date</div><div>Heure</div><div>État</div></div>
+      <div id="alarmList"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ZONES=[
+  {id:1,name:"Salle Opérateur",   risk:"Court-circuit · PC supervision",      det:1,in:"%M521",out:"%M529"},
+  {id:2,name:"Salle Automates",   risk:"Court-circuit · Défaut isolement",     det:3,in:"%M522",out:"%M530"},
+  {id:3,name:"Salle Batterie",    risk:"Emballement thermique · H₂",           det:2,in:"%M523",out:"%M531"},
+  {id:4,name:"Tableaux MT",       risk:"Arc électrique · 5.5kV–30kV",         det:5,in:"%M524",out:"%M532"},
+  {id:5,name:"Tableaux MCC",      risk:"Surcharge · Échauffement câbles",      det:8,in:"%M525",out:"%M533"},
+  {id:6,name:"Salle Cos φ",       risk:"Éclatement condensateur · Arc",        det:5,in:"%M526",out:"%M534"},
+  {id:7,name:"Salle Transfo",     risk:"Étincelle électrique · MT/BT",         det:4,in:"%M527",out:"%M535"},
+  {id:8,name:"Salle Câbles S-sol",risk:"Propagation rapide · Chemins câbles",  det:8,in:"%M528",out:"%M537"},
+];
+const VARS=[
+  {a:"%M521",n:"In_zone1",v:0},{a:"%M522",n:"In_zone2",v:0},{a:"%M528",n:"In_zone8",v:0},
+  {a:"%M529",n:"Out_zone1",v:0},{a:"%M530",n:"Out_zone2",v:0},{a:"%M537",n:"Out_zone8",v:0},
+  {a:"%M538",n:"Sir_etage1",v:0},{a:"%M539",n:"Sir_etage2",v:0},
+  {a:"%M544",n:"In_al_feu",v:0},{a:"%M545",n:"Out_al_feu",v:0},
+  {a:"%M546",n:"In_derang",v:0},{a:"%M548",n:"In_acquit",v:0},{a:"%M549",n:"Out_acquit",v:0},
+];
+const S={zones:ZONES.map(z=>({...z,st:'veille'})),alarms:[],timers:{},anyAlarm:false,derang:false};
+
+function buildHeroGrid(){
+  const g=document.getElementById('heroGrid');if(!g)return;g.innerHTML='';
+  for(let i=1;i<=8;i++){
+    const c=document.createElement('div');c.className='h-pre-cell';c.id='hc'+i;
+    c.innerHTML=`<div class="h-pre-led"></div><div class="h-pre-id">Z${i}</div>`;
+    g.appendChild(c);
+  }
+}
+
+function renderZones(){
+  const c=document.getElementById('zList');c.innerHTML='';
+  S.zones.forEach(z=>{
+    const el=document.createElement('div');el.className='zc '+z.st;el.id='zc'+z.id;
+    const dots=Array.from({length:z.det},()=>`<div class="dd ${z.st==='veille'?'on':z.st==='alarm'?'fire':''}"></div>`).join('');
+    el.innerHTML=`<div class="zc-top"><div class="zc-n">Z${z.id}</div><div class="zc-i"><div class="zc-nm">${z.name}</div><div class="zc-rk">${z.risk}</div></div><div class="zc-led"></div></div>
+    <div class="zc-body"><div class="zc-meta">${z.in} → ${z.out} · ${z.det} dét. A1R</div><div class="drow">${dots}</div><div class="zc-tmr" id="zt${z.id}"></div>
+    <div class="zc-btns"><button class="zb zbf" onclick="trigAlarm(${z.id})">⚡ Déclencher</button><button class="zb zbr" onclick="resetZone(${z.id})">✓ Reset</button></div></div>`;
+    c.appendChild(el);
+  });
+}
+
+function renderVoyants(){
+  const g=document.getElementById('mgGrid');g.innerHTML='';
+  S.zones.forEach(z=>{
+    const c=document.createElement('div');c.className='mc '+z.st;c.id='mc'+z.id;
+    c.innerHTML=`<div class="mc-led"></div><div class="mc-id">Z${z.id}</div><div class="mc-lbl">${z.name.slice(0,10)}</div>`;
+    g.appendChild(c);
+  });
+}
+
+function renderVars(){
+  const b=document.getElementById('varBody');b.innerHTML='';
+  VARS.forEach(v=>{
+    const cls=v.v?(v.n.includes('al_feu')||v.n.includes('In_zone')?'f':'t'):'';
+    const r=document.createElement('div');r.className='vrow';
+    r.innerHTML=`<div class="va">${v.a}</div><div class="vn">${v.n}</div><div class="vv ${cls}">${v.v?'1':'0'}</div>`;
+    b.appendChild(r);
+  });
+}
+
+function setVar(name,val){const v=VARS.find(x=>x.n===name);if(v)v.v=val?1:0;renderVars();}
+
+function log(msg,type){
+  const now=new Date();
+  const t=now.toLocaleTimeString('fr-FR')+'.'+String(now.getMilliseconds()).padStart(3,'0');
+  const el=document.getElementById('evBody');
+  const e=document.createElement('div');e.className='eve '+type;
+  e.innerHTML=`<div class="eve-t">${t}</div><div>${msg}</div>`;
+  el.insertBefore(e,el.firstChild);
+  while(el.children.length>28)el.removeChild(el.lastChild);
+}
+
+function update(){renderZones();renderVoyants();renderVars();}
+
+function trigAlarm(zid){
+  const z=S.zones.find(x=>x.id===zid);if(z.st==='alarm')return;
+  // DÉRANGEMENT ACTIF = coupure câble → signal non transmis → alarme bloquée
+  if(S.derang){
+    log(`⛔ ALARME Z${zid} BLOQUÉE — Dérangement actif · Coupure boucle · %M546=1`,'warn');
+    return;
+  }
+  z.st='alarm';S.anyAlarm=true;
+  setVar('In_zone'+zid,1);setVar('In_al_feu',1);
+  document.getElementById('cDisp').innerHTML=`⚠ ALARME FEU — ZONE ${zid}<br>${z.name.toUpperCase()}`;
+  document.getElementById('cF').className='cl-d r';
+  document.getElementById('gFeu').classList.add('active');
+  // gDg stays red (no derangement triggered by fire alarm)
+  document.getElementById('siren').classList.add('on');
+  document.getElementById('nSt').textContent='ALARME Z'+zid;
+  document.getElementById('btnAcq').disabled=false;
+  const hc=document.getElementById('hc'+zid);
+  if(hc){hc.classList.add('va');document.getElementById('hTagOk').style.display='none';document.getElementById('hTagAl').style.display='';}
+  ['lw1','lw2','lw3','lw4','lw5','lw6','lw7','lw8','lw9'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.add('on');});
+  ['lc1','lc3','lc5'].forEach(id=>{const e=document.getElementById(id);if(e){e.classList.remove('on');e.classList.add('fire');}});
+  ['lc2','lc4','lc6'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.add('on');});
+  ['lco1','lco2','lco3'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.add('on');});
+  const now=new Date();
+  S.alarms.unshift({msg:`ALARME INCENDIE Z${zid} — ${z.name}`,date:now.toLocaleDateString('fr-FR'),time:now.toLocaleTimeString('fr-FR'),etat:'ACTIF',active:true});
+  log(`⚠ ALARME Z${zid} — ${z.name} | ${z.in} → 1`,'alarm');
+  log(`Temporisateur Inc_zone_${zid} (F_ton) démarré — T=10s`,'info');
+  let t=10;
+  S.timers[zid]=setInterval(()=>{
+    t--;
+    const te=document.getElementById('zt'+zid);
+    if(te)te.textContent=`⏱ Tempo: ${t}s → ${z.out}`;
+    if(t<=0){
+      clearInterval(S.timers[zid]);
+      setVar('Out_zone'+zid,1);setVar('Out_al_feu',1);setVar('Sir_etage1',1);setVar('Sir_etage2',1);
+      log(`${z.out} → 1 | Interverrouillage · Coupure secteur Z${zid}`,'alarm');
+      log(`Sir_etage1 %M538 → 1 | SIRÈNE 106dB EN54-3`,'warn');
+      if(te)te.textContent=`✓ Interverrouillage actif`;
+    }
+  },1000);
+  update();
+}
+
+function resetZone(zid){
+  const z=S.zones.find(x=>x.id===zid);if(z.st==='veille')return;
+  clearInterval(S.timers[zid]);z.st='veille';
+  const te=document.getElementById('zt'+zid);if(te)te.textContent='';
+  setVar('In_zone'+zid,0);setVar('Out_zone'+zid,0);
+  const hc=document.getElementById('hc'+zid);if(hc)hc.classList.remove('va');
+  log(`✓ RESET Z${zid} — ${z.name} remise en veille`,'ok');
+  checkGlobal();update();
+}
+
+function checkGlobal(){
+  const any=S.zones.some(z=>z.st==='alarm');S.anyAlarm=any;
+  if(!any){
+    document.getElementById('gFeu').classList.remove('active');
+    document.getElementById('gDg').classList.remove('active');
+    document.getElementById('siren').classList.remove('on');
+    document.getElementById('cDisp').innerHTML='VEILLE — TOUS CIRCUITS OK<br>8 ZONES · 36 DÉT. OPÉRATIONNELS';
+    document.getElementById('cF').className='cl-d';
+    document.getElementById('btnAcq').disabled=true;
+    document.getElementById('nSt').textContent='EN VEILLE';
+    document.getElementById('hTagOk').style.display='';
+    document.getElementById('hTagAl').style.display='none';
+  }
+}
+
+function toggleDerang(){
+  S.derang = !S.derang;
+  const btn = document.getElementById('btnDg');
+  const banner = document.getElementById('dgBanner');
+  const gDg = document.getElementById('gDg');
+  const cD = document.getElementById('cD');
+  if(S.derang){
+    // Dérangement activé : câble coupé → RFL perdue → centrale signale dérangement
+    setVar('In_derang',1);
+    btn.classList.add('active');
+    btn.textContent='✕ Fin Dérangement';
+    banner.style.display='flex';
+    gDg.classList.add('active');  // vert = signal reçu de la centrale
+    cD.className='cl-d r';
+    document.getElementById('nSt').textContent='DÉRANGEMENT ACTIF';
+    const now=new Date();
+    S.alarms.unshift({msg:'DÉRANGEMENT SSI — Coupure câble boucle détection · RFL perdue',date:now.toLocaleDateString('fr-FR'),time:now.toLocaleTimeString('fr-FR'),etat:'ACTIF',active:true});
+    log('⚠ DÉRANGEMENT — Coupure câble · RFL 3.3kΩ perdue · %M546 → 1','warn');
+    log('Toutes alarmes de détection BLOQUÉES · Programme Incendie_zone suspendu','alarm');
+  } else {
+    // Dérangement résolu : câble rétabli → RFL OK → centrale revient en veille
+    setVar('In_derang',0);
+    btn.classList.remove('active');
+    btn.textContent='⚡ Dérangement';
+    banner.style.display='none';
+    gDg.classList.remove('active');  // rouge = retour veille (contact sec ouvert)
+    cD.className='cl-d';
+    if(!S.anyAlarm) document.getElementById('nSt').textContent='EN VEILLE';
+    log('✓ DÉRANGEMENT RÉSOLU — Câble rétabli · RFL 3.3kΩ OK · %M546 → 0','ok');
+    log('Détection zones réactivée · Programme Incendie_zone opérationnel','info');
+  }
+}
+
+function acquitter(){
+  setVar('In_acquit',1);setVar('Out_acquit',1);
+  log('ACQUITTEMENT · %M548→1 · RESET(R) exécuté','ok');
+  S.alarms=S.alarms.map(a=>({...a,etat:'ACQUITTÉ',active:false}));
+  document.getElementById('btnAcq').disabled=true;
+  setTimeout(()=>{setVar('In_acquit',0);setVar('Out_acquit',0);log('Acquittement terminé · %M549→0','info');},2000);
+}
+
+function resetAll(){
+  Object.values(S.timers).forEach(t=>clearInterval(t));S.timers={};
+  S.zones.forEach(z=>{z.st='veille';const te=document.getElementById('zt'+z.id);if(te)te.textContent='';});
+  VARS.forEach(v=>v.v=0);S.anyAlarm=false;
+  document.getElementById('cDisp').innerHTML='VEILLE — TOUS CIRCUITS OK<br>8 ZONES · 36 DÉT. OPÉRATIONNELS';
+  document.getElementById('cF').className='cl-d';
+  document.getElementById('gFeu').classList.remove('active');
+  document.getElementById('gDg').classList.remove('active');
+  document.getElementById('siren').classList.remove('on');
+  document.getElementById('btnAcq').disabled=true;
+  document.getElementById('nSt').textContent='EN VEILLE';
+  document.getElementById('hTagOk').style.display='';
+  document.getElementById('hTagAl').style.display='none';
+  // Clear derangement too
+  S.derang=false;setVar('In_derang',0);
+  const btnDg=document.getElementById('btnDg');if(btnDg){btnDg.classList.remove('active');btnDg.textContent='⚡ Dérangement';}
+  const dgB=document.getElementById('dgBanner');if(dgB)dgB.style.display='none';
+  document.getElementById('gDg').classList.remove('active');
+  document.getElementById('cD').className='cl-d';
+  document.querySelectorAll('.h-pre-cell').forEach(c=>c.classList.remove('va'));
+  ['lw1','lw2','lw3','lw4','lw5','lw6','lw7','lw8','lw9'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove('on');});
+  ['lc1','lc3','lc5'].forEach(id=>{const e=document.getElementById(id);if(e){e.classList.remove('fire');e.classList.remove('on');}});
+  ['lc2','lc4','lc6'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove('on');});
+  ['lco1','lco2','lco3'].forEach(id=>{const e=document.getElementById(id);if(e)e.classList.remove('on');});
+  log('RÉARMEMENT GÉNÉRAL — Système en veille · NF S61-970 §5.3','ok');
+  update();
+}
+
+function openModal(){
+  const list=document.getElementById('alarmList');list.innerHTML='';
+  if(!S.alarms.length){list.innerHTML='<div class="at-empty">Aucune alarme enregistrée</div>';
+  }else{S.alarms.forEach(a=>{const r=document.createElement('div');r.className='at-r '+(a.active?'act':'');
+    r.innerHTML=`<div class="at-msg">${a.msg}</div><div class="at-d">${a.date}</div><div class="at-t">${a.time}</div><div class="at-e${a.active?'a':'q'}">${a.etat}</div>`;list.appendChild(r);});}
+  document.getElementById('overlay').classList.add('open');
+}
+function closeModal(){document.getElementById('overlay').classList.remove('open');}
+document.getElementById('overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+function goto(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'});}
+setInterval(()=>{const n=new Date();document.getElementById('mfTm').textContent=n.toLocaleDateString('fr-FR')+' '+n.toLocaleTimeString('fr-FR');},1000);
+
+buildHeroGrid();renderZones();renderVoyants();renderVars();
+log('SSI TSSS initialisé · TSSS_28_04_26 · NF-SSI','info');
+log('Desautel DA Evolution UC · CPU-UC V3.0/P30','info');
+log('8 zones · 36 détecteurs Apollo Série 65 A1R','ok');
+log('Magelis HMIGTO6310 · IP 172.16.17.80 · Connexion OK','ok');
+log('En attente de détection incendie...','info');
+</script>
+</body>
+</html>
